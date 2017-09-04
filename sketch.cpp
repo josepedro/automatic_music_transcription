@@ -2,15 +2,18 @@
 #include <vector>
 #include <boost/tuple/tuple.hpp>
 #include <cmath>
+#include <string>
 #include "gnuplot-iostream.h"
 
 using namespace std;
 
 const float sample_rate = 44100; //points per second
+vector<vector<vector<float> > > db_scores; // scores
+vector<string> dictionary_chords;
 
-vector<vector<float> > generate_signal(){
-    float frequency = 16; //Hz
-    float total_time = 0.2; // seconds
+vector<vector<float> > generate_signal(float frequency){
+    //float frequency = 16; //Hz
+    float total_time = 0.1; // seconds
     int total_number_points = (int) sample_rate*total_time;
 
 	vector<vector<float> >  signal_array;
@@ -51,8 +54,7 @@ void plot_graph(vector<vector<float> >  signal_array){
 
 }
 
-vector<vector<vector<float> > > generate_db_scores(){
-	vector<vector<vector<float> > > db_scores;
+void generate_db_scores(){
 	vector<float> scores;
 	scores.push_back(16.352);
 	scores.push_back(17.324);
@@ -67,8 +69,35 @@ vector<vector<vector<float> > > generate_db_scores(){
 	scores.push_back(29.135);
 	scores.push_back(30.868);
 
+	vector<string> scores_strings;
+	scores_strings.push_back("C");
+	scores_strings.push_back("C#");
+	scores_strings.push_back("D");
+	scores_strings.push_back("D#");
+	scores_strings.push_back("E");
+	scores_strings.push_back("F");
+	scores_strings.push_back("F#");
+	scores_strings.push_back("G");
+	scores_strings.push_back("G#");
+	scores_strings.push_back("A");
+	scores_strings.push_back("A#");
+	scores_strings.push_back("B");
+
+	vector<string> octaves_strings;
+	octaves_strings.push_back("0");
+	octaves_strings.push_back("1");
+	octaves_strings.push_back("2");
+	octaves_strings.push_back("3");
+	octaves_strings.push_back("4");
+	octaves_strings.push_back("5");
+	octaves_strings.push_back("6");
+	octaves_strings.push_back("7");
+	octaves_strings.push_back("8");
+	octaves_strings.push_back("9");
+	octaves_strings.push_back("10");
+	
 	int total_octaves = 11;
-	float total_time = 0.2; // seconds
+	float total_time = 0.1; // seconds
     int total_number_points = (int) sample_rate*total_time;
 	for (int octave = 0; octave < total_octaves; octave++){
 		for (int score = 0; score < scores.size(); score++){
@@ -81,11 +110,12 @@ vector<vector<vector<float> > > generate_db_scores(){
 				myvector.push_back(time_signal);
 				myvector.push_back(sin(angle));
 			    signal_array.push_back(myvector);
-			}			
+			}
+			string score_string = scores_strings[score] + octaves_strings[octave];
+			dictionary_chords.push_back(score_string);
 			db_scores.push_back(signal_array);			
 		}
 	}
-	return db_scores;
 }
 
 float conv_energy(vector<vector<float> > f, vector<vector<float> > g) {
@@ -105,13 +135,53 @@ float conv_energy(vector<vector<float> > f, vector<vector<float> > g) {
   return energy; 
 }
 
+
+string discover_score(vector<vector<float> > signal_array){
+	float max_value = 0;
+	int slot_max_value = 0;
+	for (int score = 0; score < db_scores.size(); score++){
+		float energy = conv_energy(signal_array, db_scores[score]);
+		if (energy > max_value){
+		 	max_value = energy;
+		 	slot_max_value = score;
+		 } 
+	}
+	return dictionary_chords[slot_max_value];
+}
+
 int main(){
- vector<vector<float> >  signal_array;
- signal_array = generate_signal();
- vector<vector<vector<float> > > db_scores;
- db_scores = generate_db_scores();
- cout << conv_energy(signal_array, db_scores[0]) << 
- " - " << conv_energy(signal_array, db_scores[1]) << endl;
+ generate_db_scores();
+ /*cout << conv_energy(signal_array, db_scores[0]) << 
+ " - " << conv_energy(signal_array, db_scores[1]) << endl;*/
  //plot_graph(db_scores[76]);
+ vector<vector<float> >  signal_array;
+ float frequency;
+ string score_string;
+
+ frequency = 65.40;
+ signal_array = generate_signal(frequency);
+ score_string = discover_score(signal_array);
+ cout << "Score selected: " << score_string << endl;
+ 
+ frequency = 2*frequency;
+ signal_array = generate_signal(frequency);
+ score_string = discover_score(signal_array);
+ cout << "Score selected: " << score_string << endl;
+
+ frequency = 2*frequency;
+ signal_array = generate_signal(frequency);
+ score_string = discover_score(signal_array);
+ cout << "Score selected: " << score_string << endl;
+
+ frequency = 2*frequency;
+ signal_array = generate_signal(frequency);
+ score_string = discover_score(signal_array);
+ cout << "Score selected: " << score_string << endl;
+
+ frequency = 2*frequency;
+ signal_array = generate_signal(frequency);
+ score_string = discover_score(signal_array);
+ cout << "Score selected: " << score_string << endl;
+
  return 0;
 }
